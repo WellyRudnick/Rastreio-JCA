@@ -1,0 +1,386 @@
+﻿<!doctype html>
+<html lang="pt-br">
+
+<head>
+    <title>Busca de Veículos</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+        integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        body {
+            background-color: #0d95a8;
+            font-family: "Arial", sans-serif;
+            color: #ffffff;
+            margin: 0;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100vh;
+        }
+
+        h1 {
+            text-align: center;
+            margin: 5px;
+        }
+
+        /* GRID PARA 4 MAPAS (2x2) */
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            grid-template-rows: repeat(2, 1fr);
+            gap: 10px;
+            width: 100vw;
+            height: calc(100vh - 80px);
+            padding: 10px;
+            box-sizing: border-box;
+        }
+
+        .map-box {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 10px;
+        }
+
+        .input-container {
+            display: flex;
+            width: 90%;
+            justify-content: center;
+            margin-bottom: 5px;
+        }
+
+        input {
+            font-weight: bolder;
+            padding: 15px;
+            width: 70%;
+            font-size: 24px;
+            border: none;
+            border-radius: 5px 0 0 5px;
+        }
+
+        .loading-overlay {
+            position: absolute;
+            top: 45%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1000;
+            display: none;
+            scale: 2;
+        }
+
+        iframe {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            height: calc(100% - 40px);
+            border-radius: 5px;
+        }
+
+        .map-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            flex-grow: 1;
+            /* Preenche o espaço restante */
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .spinner-roxo {
+            color: #221560 !important; /* Esse é um tom de roxo bem elegante. Se quiser mais pro azul, pode usar #5e60ce #6f42c1 #221560*/
+        }
+
+        .spinner-border {
+            animation: spin 1s linear infinite;
+        }
+
+        .input-container .btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            padding: 0 20px;
+        }
+
+        .btn-primary, .btn-danger {
+            border-radius: 0 !important;
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .btn-secondary {
+            border-radius: 0 5px 5px 0 !important;
+        }
+
+        .modal-75 {
+            width: 75vw;
+            max-width: none;
+        }
+
+        .modal-content {
+            background-color: #1e1e1e;
+            color: white;
+            border: none;
+            text-align: center;
+        }
+
+        #mapModal .modal-content {
+            height: 85vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .modal-body {
+            flex: 1 1 auto;
+            overflow: hidden;
+            padding: 0;
+        }
+
+        .modal-title {
+            color: #fff;
+        }
+
+        .modal-content {
+            background-color: #1e1e1e;
+            color: white;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Busca de Veículos</h1>
+    <div class="grid-container">
+        <!-- Mapa 1 -->
+        <div class="map-box">
+            <div class="input-container">
+                <input type="text" id="input1" placeholder="Digite o prefixo"
+                    onkeydown="if (event.keyCode == 13) carregarMapa('input1', 'map1', 'loading1')">
+                <button class="btn btn-primary btn-lg" onclick="carregarMapa('input1', 'map1', 'loading1')">
+                    <i class="bi bi-search"></i>
+                </button>
+                <button class="btn btn-danger btn-lg" onclick="resetSearch('input1', 'map1', 'loading1')">
+                    <i class="bi bi-trash"></i>
+                </button>
+                <button class="btn btn-secondary btn-lg" onclick="abrirModal('map1')">
+                    <i class="bi bi-arrows-angle-expand"></i>
+                </button>
+
+            </div>
+            <div class="map-container">
+                <iframe id="map1"></iframe>
+                <div id="loading1" class="text-center my-3 loading-overlay" style="display: none; margin-left: 30px;">
+                    <div class="spinner-border spinner-roxo" role="status">
+                        <span class="visually-hidden" style="display: none;">Carregando...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Mapa 2 -->
+        <div class="map-box">
+            <div class="input-container">
+                <input type="text" id="input2" placeholder="Digite o prefixo"
+                    onkeydown="if (event.keyCode == 13) carregarMapa('input2', 'map2', 'loading2')">
+                <button class="btn btn-primary btn-lg" onclick="carregarMapa('input2', 'map2', 'loading2')">
+                    <i class="bi bi-search"></i>
+                </button>
+                <button class="btn btn-danger btn-lg" onclick="resetSearch('input2', 'map2', 'loading2')">
+                    <i class="bi bi-trash"></i>
+                </button>
+                <button class="btn btn-secondary btn-lg" onclick="abrirModal('map2')">
+                    <i class="bi bi-arrows-angle-expand"></i>
+                </button>
+            </div>
+            <div class="map-container">
+                <iframe id="map2"></iframe>
+                <div id="loading2" class="text-center my-3 loading-overlay" style="display: none; margin-left: 30px;">
+                    <div class="spinner-border spinner-roxo" role="status">
+                        <span class="visually-hidden" style="display: none;">Carregando...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Mapa 3 -->
+        <div class="map-box">
+            <div class="input-container">
+                <input type="text" id="input3" placeholder="Digite o prefixo"
+                    onkeydown="if (event.keyCode == 13) carregarMapa('input3', 'map3', 'loading3')">
+                <button class="btn btn-primary btn-lg" onclick="carregarMapa('input3', 'map3', 'loading3')">
+                    <i class="bi bi-search"></i>
+                </button>
+                <button class="btn btn-danger btn-lg" onclick="resetSearch('input3', 'map3', 'loading3')">
+                    <i class="bi bi-trash"></i>
+                </button>
+                <button class="btn btn-secondary btn-lg" onclick="abrirModal('map3')">
+                    <i class="bi bi-arrows-angle-expand"></i>
+                </button>
+            </div>
+            <div class="map-container">
+                <iframe id="map3"></iframe>
+                <div id="loading3" class="text-center my-3 loading-overlay" style="display: none; margin-left: 30px;">
+                    <div class="spinner-border spinner-roxo" role="status">
+                        <span class="visually-hidden" style="display: none;">Carregando...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Mapa 4 -->
+        <div class="map-box">
+            <div class="input-container">
+                <input type="text" id="input4" placeholder="Digite o prefixo"
+                    onkeydown="if (event.keyCode == 13) carregarMapa('input4', 'map4', 'loading4')">
+                <button class="btn btn-primary btn-lg" onclick="carregarMapa('input4', 'map4', 'loading4')">
+                    <i class="bi bi-search"></i>
+                </button>
+                <button class="btn btn-danger btn-lg" onclick="resetSearch('input4', 'map4', 'loading4')">
+                    <i class="bi bi-trash"></i>
+                </button>
+                <button class="btn btn-secondary btn-lg" onclick="abrirModal('map4')">
+                    <i class="bi bi-arrows-angle-expand"></i>
+                </button>
+            </div>
+            <div class="map-container">
+                <iframe id="map4"></iframe>
+                <div id="loading4" class="text-center my-3 loading-overlay" style="display: none; margin-left: 30px;">
+                    <div class="spinner-border spinner-roxo" role="status">
+                        <span class="visually-hidden" style="display: none;">Carregando...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="mapModal" tabindex="-1" role="dialog" aria-labelledby="mapModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-75 modal-dialog-centered" role="document">
+            <div class="modal-content text-center">
+                <div class="modal-header" style="flex: 0 0 auto; background-color: #221560;">
+                    <h1 class="modal-title" id="mapModalLabel"><strong>Mapa em Tela Cheia</strong>
+                    </h1>
+                </div>
+                <div class="modal-body p-0" style="flex: 1 1 auto; overflow: hidden;">
+                    <iframe id="modalMap" width="100%" height="100%" frameborder="0" style="border: none;"></iframe>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="alertaModal" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-sm" role="document">
+            <div class="modal-content" style="background-color: #1e1e1e; color: white; border: 1px solid #444;">
+                <div class="modal-header" style="background-color: #221560; border-bottom: 1px solid #444; padding: 10px 15px;">
+                    <h5 class="modal-title" id="alertaModalTitle" style="font-weight: bold;">Aviso</h5>
+                </div>
+                <div class="modal-body" id="alertaModalBody" style="padding: 20px 15px;">
+                    </div>
+                <div class="modal-footer" style="border-top: none; padding: 10px;">
+                    <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Fechar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+
+    <script>
+        var prefixoToPlaca = {};
+        
+        const gistUrl = 'https://gist.githubusercontent.com/WellyRudnick/624b74b6e60a1754ccfa9f54a598c902/raw/98833711f98b3faa63029765b3886f990f14380b/Frota.json';
+
+        fetch(gistUrl)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Erro na rede ou link inválido');
+                }
+                return response.json();
+            })
+            .then(data => {
+                prefixoToPlaca = data;
+                console.log('Banco de dados da frota carregado com sucesso!');
+            })
+            .catch(error => {
+                console.error('Erro ao carregar o banco de dados da frota:', error);
+                mostrarAlerta('Erro de Conexão', 'Verifique a internet e tente abrir o sistema novamente.');
+            }); 
+    
+        function carregarMapa(inputId, iframeId, loadingId) {
+            var prefixoInput = document.getElementById(inputId);
+            var prefixo = prefixoInput.value.toUpperCase().trim();
+            var placa = prefixoToPlaca[prefixo];
+            var iframe = document.getElementById(iframeId);
+            var loading = document.getElementById(loadingId);
+
+            if (placa) {
+                loading.style.display = "block";
+                iframe.onload = function () {
+                    loading.style.display = "none";
+                }
+                    ;
+                iframe.src = `https://sing.jcatlm.com.br/mapajca?PLACA=${placa}`;
+            } else {
+                mostrarAlerta('Aviso', 'Prefixo não encontrado! Verifique se digitou corretamente.');
+            }
+        }
+
+        function resetSearch(inputId, iframeId, loadingId) {
+            var prefixoInput = document.getElementById(inputId);
+            var iframe = document.getElementById(iframeId);
+            var loading = document.getElementById(loadingId);
+
+            prefixoInput.value = "";
+            iframe.src = "";
+            loading.style.display = "none";
+        }
+
+        function abrirModal(mapId) {
+            const iframeOriginal = document.getElementById(mapId);
+            const modalIframe = document.getElementById("modalMap");
+            const modalTitle = document.getElementById("mapModalLabel");
+
+            const mapNumber = mapId.replace("map", "");
+            const inputElement = document.getElementById("input" + mapNumber);
+
+            const inputValue = inputElement ? inputElement.value.trim() : "";
+
+            modalTitle.textContent = inputValue ? "" + inputValue : "Mapa em Tela Cheia";
+
+            modalIframe.src = iframeOriginal.src;
+            $('#mapModal').modal('show');
+        }
+
+        function mostrarAlerta(titulo, mensagem) {
+            document.getElementById('alertaModalTitle').textContent = titulo;
+            document.getElementById('alertaModalBody').textContent = mensagem;
+            $('#alertaModal').modal('show');
+        }
+
+    </script>
+    <!-- Optional JavaScript -->
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
+        integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
+        crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"
+        integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1"
+        crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
+        integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
+        crossorigin="anonymous"></script>
+</body>
+
+</html>

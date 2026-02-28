@@ -1,0 +1,14 @@
+# Arquivos do PyInstaller
+build/
+dist/
+*.spec
+
+# Cache do Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Arquivos de log e sistema operacional
+*.log
+.DS_Store
+Thumbs.db
